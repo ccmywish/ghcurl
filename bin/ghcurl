@@ -11,23 +11,36 @@
 #
 # ------------------------------------------------------
 
+require 'nokogiri'
+require 'open-uri'
+
 module Ghcurl
 
-  VERSION   = "0.3.1"
+  VERSION   = "0.4.0"
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
   BIN_PATH  = "/usr/local/bin"
   
   class Error < StandardError; end
+
+
+  def bold(str)       "\e[1m#{str}\e[0m" end
+  def green(str)      "\e[32m#{str}\e[0m" end
+  def blue(str)       "\e[34m#{str}\e[0m" end
+
+  
+  def log(msg)
+    puts blue(bold("ghcurl: #{msg}"))
+  end
   
 
-  def curl(url, ware)
+  def curl(url, name)
     #if !test('d', WAREHOUSE)
     #  require 'fileutils'
     #  FileUtils.mkdir_p(WAREHOUSE)
     #end
-    cmd = "curl -L #{url} --create-dirs -o #{WAREHOUSE}/#{ware}"
+    cmd = "curl -L #{url} --create-dirs -o #{WAREHOUSE}/#{name}"
     system cmd
-    puts "ghcurl: Downloaded to #{WAREHOUSE}/#{ware}"
+    log "Downloaded to #{WAREHOUSE}/#{name}"
   end
 
 
@@ -40,18 +53,25 @@ module Ghcurl
       repo = uri.path.split('/')[1,2].join('/')
     end
 
+    log "checking..."
     unless version
-      # Notice: releases/tag/vx.x.x/download not works!!!
-      # This is a link relocation
-      url = "https://github.com/#{repo}/releases/latest/download/#{ware}"
+      doc = Nokogiri::HTML5 URI.open("https://github.com/#{repo}/releases/latest")
     else
-      # The real download link
-      url = "https://github.com/#{repo}/releases/download/v#{version}/#{ware}"
+      doc = Nokogiri::HTML5 URI.open("https://github.com/#{repo}/releases/tag/v#{version}")
     end
 
-    puts url
 
-    curl(url, ware)
+    link = doc.css("li>a[href^='/cli/cli/releases/download']").each do
+      break _1['href'] if _1['href'] =~ /#{ware}/
+    end
+
+    url = "https://github.com" + link
+
+    log "Downloading #{url}"
+    
+    $downloaded = link.split('/').last
+
+    curl(url, $downloaded)
 
   end
 
@@ -62,6 +82,7 @@ module Ghcurl
     else
       install_on_nix(ware, place)
     end
+    log "Install finish!"
   end
 
 
@@ -70,11 +91,13 @@ module Ghcurl
     target = "#{WAREHOUSE}/#{ware}"
 
     if target.end_with?('.deb')
+      log "Install deb package for you"
       system "sudo dpkg -i #{target}"
       return
     end
 
     if target.end_with?('.rpm')
+      log "Install rpm package for you"
       system "sudo rpm -i #{target}"
       return
     end
@@ -83,7 +106,7 @@ module Ghcurl
     if test 'd', place
       cmd = "sudo install -Dt #{place} -m 755 #{target} "
       system cmd
-      puts "\nghcurl: Install #{ware} to " + place
+      log "Install #{ware} to " + place
 
     else
       unless place.include?('/')
@@ -92,7 +115,7 @@ module Ghcurl
       else
         # User give it a path and its name
       end
-      puts "\nghcurl: Installed as " + place
+      log "Installed as " + place
       system "sudo cp #{target} #{place}"
       system "sudo chmod +x #{place}"
     end
@@ -105,10 +128,6 @@ module Ghcurl
 
 
   def list_wares
-
-    def bold(str)       "\e[1m#{str}\e[0m" end
-    def green(str)      "\e[32m#{str}\e[0m" end
-    def blue(str)       "\e[34m#{str}\e[0m" end
     
     puts blue("In #{WAREHOUSE}")
     puts
@@ -153,8 +172,8 @@ when nil            then help ; exit
 end
 
 if ware.nil?
-  puts "ghcurl: Download what?"
-  puts "        use: ghcurl repo file"
+  log "ghcurl: Download what?"
+  log "        use: ghcurl repo file"
   exit
 end
 
@@ -186,11 +205,11 @@ case next_op
 when '-i' 
   place = ARGV.shift
   if place.nil?
-    install(ware)
+    install($downloaded)
   else
-    install(ware, place: place)
+    install($downloaded, place: place)
   end
 when /-i.*/
   place = next_op.split('-i')[1]
-  install(ware, place: place)
+  install($downloaded, place: place)
 end
