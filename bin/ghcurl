@@ -7,15 +7,153 @@
 #
 # ghcurl:
 #
-#   Download binary file on Github release.
+#   Download files (and install) from Github releases
 #
 # ------------------------------------------------------
 
 module Ghcurl
 
-  VERSION = "0.1.0"
+  VERSION   = "0.1.0"
+  WAREHOUSE = File.expand_path("~/.cache/ghcurl")
+  BIN_PATH  = "/usr/local/bin"
   
   class Error < StandardError; end
   
 
+  def curl(url, ware)
+    #if !test('d', WAREHOUSE)
+    #  require 'fileutils'
+    #  FileUtils.mkdir_p(WAREHOUSE)
+    #end
+    cmd = "curl -L #{url} --create-dirs -o #{WAREHOUSE}/#{ware}"
+    system cmd
+    puts "ghcurl: Downloaded to #{WAREHOUSE}/#{ware}"
+  end
+
+
+  def download(repo, ware, version: nil)
+
+    if repo =~ /^https:\/\/github.com/
+      require 'uri'
+      uri = URI(repo)
+      # index 1, take 2
+      repo = uri.path.split('/')[1,2].join('/')
+    end
+
+    unless version
+      # Notice: releases/tag/vx.x.x/download not works!!!
+      # This is a link relocation
+      url = "https://github.com/#{repo}/releases/latest/download/#{ware}"
+    else
+      # The real download link
+      url = "https://github.com/#{repo}/releases/download/v#{version}/#{ware}"
+    end
+
+    puts url
+
+    curl(url, ware)
+
+  end
+
+
+  def install(ware, place: BIN_PATH)
+    puts "\nghcurl: Install #{ware} to " + place
+    cmd = "sudo install -Dt #{place} -m 755 #{WAREHOUSE}/#{ware} "
+    system cmd
+  end
+
+
+  def list_wares
+
+    def bold(str)       "\e[1m#{str}\e[0m" end
+    def green(str)      "\e[32m#{str}\e[0m" end
+    def blue(str)       "\e[34m#{str}\e[0m" end
+    
+    puts blue("In #{WAREHOUSE}")
+    puts
+    Dir.children(WAREHOUSE).each_with_index do |dict,i|
+      puts "  #{blue(i+1)}. #{bold(green(dict))}"
+    end
+    puts
+  end
+
+
+  def help
+    puts <<~EOC
+    ghcurl (v#{VERSION}): Download files (and install) from Github releases
+
+    usage:
+      ghcurl repo_url  file   => Specify a repo's url
+      ghcurl user/repo file   => Specify by user/repo
+      ghcurl xxx -v tag       => Specify a tag version
+      ghcurl xxx -i [path]    => Download and install, default to /usr/local/bin
+      ghcurl -l               => List downloaded files
+      ghcurl -h               => Print this help
+
+    EOC
+  end
+
+end
+
+
+
+####################
+# main: CLI Handling
+####################
+extend Ghcurl
+
+# e.g. ccmywish/binary
+gh_repo, ware = ARGV.shift(2)
+
+if gh_repo == '-l'
+  list_wares
+  return
+end
+
+if gh_repo == '-h' or gh_repo == '--help'
+  help
+  exit
+end
+
+if ware.nil?
+  puts "ghcurl: Download what?"
+  puts "        use: ghcurl repo file"
+  exit
+end
+
+
+arg = ARGV.shift
+
+next_op = true
+
+case arg
+when '-v'   
+  download gh_repo, ware, version: ARGV.shift
+when /-v\d.*/
+  v = arg.split('-v')[1]
+  download gh_repo, ware, version: v
+else
+  download gh_repo, ware
+  next_op = false
+end
+
+
+if next_op
+  next_op = ARGV.shift
+else
+  next_op = arg
+end
+
+
+case next_op
+when '-i' 
+  place = ARGV.shift
+  if place.nil?
+    install(ware)
+  else
+    install(ware, place: place)
+  end
+when /-i.*/
+  place = next_op.split('-i')[1]
+  install(ware, place: place)
 end
