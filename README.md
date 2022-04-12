@@ -1,12 +1,18 @@
+<div align="center">
+
 # ghcurl
 
-Download files (and install) from Github releases.
-
-## Installation
+[![Gem Version](https://badge.fury.io/rb/ghcurl.svg)](https://rubygems.org/gems/ghcurl) 
 
 ```bash
 gem install ghcurl
 ```
+
+<br>
+
+Download files (and install) from Github releases.
+
+</div>
 
 ## Usage
 
