@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+# ------------------------------------------------------
+# File          : ghcurl.rb
+# Authors       : ccmywish <ccmywish@qq.com>
+# Created on    : <2022-04-12>
+# Last modified : <2022-04-12>
+#
+# ghcurl:
+#
+#   Download binary file on Github release.
+#
+# ------------------------------------------------------
+
+module Ghcurl
+
+  VERSION = "0.1.0"
+  
+  class Error < StandardError; end
+  
+
+end
