@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-12>
+# Last modified : <2022-04-13>
 #
 # ghcurl:
 #
@@ -61,7 +61,19 @@ module Ghcurl
     end
 
 
-    link = doc.css("li>a[href^='/cli/cli/releases/download']").each do
+    links = doc.css("li>a[href^='/#{repo}/releases/download']")
+    if links.empty?
+      puts doc.css('li a').map(&:to_s)
+      log <<~EOE
+      The search result is empty, check the args:
+              repo:    #{repo}
+              version: #{version ? version:'nil'}
+              regexp:  #{ware}
+      EOE
+      puts
+    end
+    
+    link = links.each do
       break _1['href'] if _1['href'] =~ /#{ware}/
     end
 
@@ -143,13 +155,18 @@ module Ghcurl
     ghcurl (v#{VERSION}): Download files (and install) from Github releases
 
     usage:
-      ghcurl repo_url  file   => Specify a repo's url
-      ghcurl user/repo file   => Specify by user/repo
-      ghcurl xxx -v tag       => Specify a tag version
-      ghcurl xxx -i [path]    => Download and install, default to /usr/local/bin
-      ghcurl xxx -i filename  => Download and install it as filename
+      ghcurl repo_url  regexp => Search in repo_url the latest to download
+      ghcurl user/repo regexp => Search in user/repo the latest to download
+      ghcurl url re -v tag    => Download a specific tag version
+      ghcurl url re deb/rpm   => Download and install deb/rpm package
+      ghcurl url re -i [path] => Download and install to /usr/local/bin
+      ghcurl url re -i name   => Download and install as 'name'
       ghcurl -l               => List downloaded files
       ghcurl -h               => Print this help
+
+    example:
+      ghcurl rbspy/rbspy 'x86_64.*linux' -v0.11.1
+      ghcurl cli/cli deb -i
 
     EOC
   end

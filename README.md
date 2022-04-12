@@ -24,19 +24,19 @@ ghcurl cli/cli rpm -i
 
 Normal download
 ```bash
-# Download latest timeleft to ~/.cache/ghcurl
-ghcurl BetaPictoris/timeleft timeleft
+# Download latest rbspy-x86_64-unknown-linux-gnu.tar.gz to ~/.cache/ghcurl
+ghcurl rbspy/rbspy x86_64.*linux
 
-# Download timeleft version 1.1.0
-ghcurl BetaPictoris/timeleft timeleft -v1.1.0
+# Download rbspy version 0.11.1 
+ghcurl rbspy/rbspy 'x86_64.*linux' -v0.11.1
 ```
 
 Download a binary and install it to anywhere
 ```bash
-# install to /usr/local/bin
+# Install to /usr/local/bin
 ghcurl BetaPictoris/timeleft timeleft -i 
 
-# install to ~/tmp/bin
+# Install to ~/tmp/bin
 ghcurl BetaPictoris/timeleft timeleft -i ~/tmp/bin
 
 # Install and rename it to, here, 'gd' in /usr/local/bin
