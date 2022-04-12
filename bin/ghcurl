@@ -13,7 +13,7 @@
 
 module Ghcurl
 
-  VERSION   = "0.3.0"
+  VERSION   = "0.3.1"
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
   BIN_PATH  = "/usr/local/bin"
   
