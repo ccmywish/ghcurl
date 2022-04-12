@@ -35,9 +35,9 @@ ghcurl BetaPictoris/timeleft timeleft -i
 # Download and install it to a path you like
 ghcurl BetaPictoris/timeleft timeleft -i ~/tmp/bin
 
-# Install and rename it to what you like
-ghcurl BetaPictoris/timeleft timeleft -i tl
+# Install and rename it to what you like, here, to 'gd'
+ghcurl dlvhdr/gh-dash linux-amd64 -i gd
 
-# Or, like this
-ghcurl BetaPictoris/timeleft timeleft -i ~/tmp/bin/tl
+# or, like this
+ghcurl dlvhdr/gh-dash linux-amd64 -i ~/tmp/bin/gd
 ```
