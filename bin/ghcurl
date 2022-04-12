@@ -104,15 +104,10 @@ extend Ghcurl
 
 # e.g. ccmywish/binary
 gh_repo, ware = ARGV.shift(2)
-
-if gh_repo == '-l'
-  list_wares
-  return
-end
-
-if gh_repo == '-h' or gh_repo == '--help'
-  help
-  exit
+case gh_repo
+when '-l'           then list_wares ; exit
+when '-h', '--help' then help ; exit
+when nil            then help ; exit
 end
 
 if ware.nil?
