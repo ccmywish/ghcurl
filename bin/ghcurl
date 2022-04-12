@@ -13,7 +13,7 @@
 
 module Ghcurl
 
-  VERSION   = "0.1.0"
+  VERSION   = "0.2.0"
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
   BIN_PATH  = "/usr/local/bin"
   
@@ -55,11 +55,41 @@ module Ghcurl
 
   end
 
-
   def install(ware, place: BIN_PATH)
-    puts "\nghcurl: Install #{ware} to " + place
-    cmd = "sudo install -Dt #{place} -m 755 #{WAREHOUSE}/#{ware} "
-    system cmd
+    case RUBY_PLATFORM
+    when /ucrt/i, /mingw/i
+      install_on_windows(ware, place)
+    else
+      install_on_nix(ware, place)
+    end
+  end
+
+
+  def install_on_nix(ware, place)
+
+    target = "#{WAREHOUSE}/#{ware}"
+
+    if test 'd', place
+      cmd = "sudo install -Dt #{place} -m 755 #{target} "
+      system cmd
+      puts "\nghcurl: Install #{ware} to " + place
+
+    else
+      unless place.include?('/')
+        # User just give it another name
+        place = BIN_PATH + '/' + place
+      else
+        # User give it a path and its name
+      end
+      puts "\nghcurl: Installed as " + place
+      system "sudo cp #{target} #{place}"
+      system "sudo chmod +x #{place}"
+    end
+
+  end
+
+
+  def install_on_windows
   end
 
 
@@ -87,6 +117,7 @@ module Ghcurl
       ghcurl user/repo file   => Specify by user/repo
       ghcurl xxx -v tag       => Specify a tag version
       ghcurl xxx -i [path]    => Download and install, default to /usr/local/bin
+      ghcurl xxx -i filename  => Download and install it as filename
       ghcurl -l               => List downloaded files
       ghcurl -h               => Print this help
 

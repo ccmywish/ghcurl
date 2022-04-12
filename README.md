@@ -21,5 +21,11 @@ ghcurl BetaPictoris/timeleft timeleft -v1.1.0
 ghcurl BetaPictoris/timeleft timeleft -i 
 
 # Download and install it to a path you like
-ghcurl BetaPictoris/timeleft timeleft -i ~/.local/bin
+ghcurl BetaPictoris/timeleft timeleft -i ~/tmp/bin
+
+# Install and rename it to what you like
+ghcurl BetaPictoris/timeleft timeleft -i tl
+
+# Or, like this
+ghcurl BetaPictoris/timeleft timeleft -i ~/tmp/bin/tl
 ```
