@@ -13,7 +13,7 @@
 
 module Ghcurl
 
-  VERSION   = "0.2.0"
+  VERSION   = "0.3.0"
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
   BIN_PATH  = "/usr/local/bin"
   
@@ -68,6 +68,17 @@ module Ghcurl
   def install_on_nix(ware, place)
 
     target = "#{WAREHOUSE}/#{ware}"
+
+    if target.end_with?('.deb')
+      system "sudo dpkg -i #{target}"
+      return
+    end
+
+    if target.end_with?('.rpm')
+      system "sudo rpm -i #{target}"
+      return
+    end
+
 
     if test 'd', place
       cmd = "sudo install -Dt #{place} -m 755 #{target} "
