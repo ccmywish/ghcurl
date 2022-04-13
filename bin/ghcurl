@@ -15,11 +15,12 @@ require 'ghcurl'
 require 'nokogiri'
 require 'open-uri'
 require 'highline'
+require 'cliswitch'
 
 module Ghcurl
 
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
-  BIN_PATH  = "/usr/local/bin"
+  BIN_PATH  = ENV['GHCURL_BIN_PATH'] || "/usr/local/bin"
 
   HL = HighLine.new
 
@@ -47,6 +48,71 @@ module Ghcurl
   end
 
 
+  def get_filters
+
+    arches = [ 
+                ['amd64','x86_64', 'x64'], 
+                ['386'],
+                ['arm64'], 
+                ['armv6'] 
+             ]
+    
+    oses = [
+             ['linux'],
+             ['mac', 'apple'],
+             ['windows']
+           ]
+
+    fs = RUBY_PLATFORM.split('-')
+    os = ""
+    arch = ""
+    fs.each do |f|
+      case f
+      when 'linux'  then os = 'linux'
+      when 'mac','macOS' then os = 'mac'
+      when 'ucrt', 'mingw', 'windows' then os = 'windows' 
+      when 'x86_64' then arch = 'x86_64'
+      when 'x86'    then arch = 'x86'
+      when 'amd64'  then arch = 'amd64'  
+      when 'arm64'  then arch = 'arm64' 
+      when 'armv6'  then arch = 'armv6' 
+      end
+    end
+
+    approval, refuse  = [], []
+    [os, arch].each { approval << _1 unless _1.nil? }
+
+    if os 
+      i = oses.each_with_index do |type, index|
+        break index if type.include? os
+      end
+      if !i.nil?
+        tmp = oses.dup
+        tmp.delete_at(i)
+        refuse.concat tmp.flatten
+      end
+    end
+
+
+    if arch
+      i = arches.each_with_index do |type, index|
+        break index if type.include? arch
+      end
+      if !i.nil?
+        tmp = arches.dup
+        tmp.delete_at(i)
+        refuse.concat tmp.flatten
+      end
+    end
+
+    p "=> Approval and refuse"
+    p approval
+    p refuse
+    return approval, refuse
+  
+  end
+
+
   def download(repo, ware, version: nil)
 
     if repo =~ /^https:\/\/github.com/
@@ -61,6 +127,7 @@ module Ghcurl
         repo = user + '/' + repo
       else
         repo = got_repo
+        log "Use the popular repo #{repo}"
       end
     end
 
@@ -83,10 +150,42 @@ module Ghcurl
       EOE
       puts
     end
+
+    links = links.map { _1['href'] }
+    app, refuse = get_filters()
     
-    link = links.each do
-      break _1['href'] if _1['href'] =~ /#{ware}/
+    filtered = links.select do |l|
+      
+      ret = refuse.all? do |f|
+        l !~ /#{f}/
+      end
+
+      next if !ret
+
+      app.any? do |f|      
+        l =~ /#{f}/
+      end
     end
+
+    if filtered.size == 1
+      link = filtered[0]
+    else 
+      if filtered.size == 0
+        links_for_user = links.map { _1.split('/').last }
+      else
+        links_for_user = filtered.map { _1.split('/').last }
+      end
+      link = HL.choose do |menu|
+        menu.index_color  = :rgb_77bbff
+        menu.prompt = "Which one do you want to download? "
+        menu.choices( *links_for_user ) {}
+      end
+    end
+    
+    p link.class
+    # link = links.each do
+    #  break _1['href'] if _1['href'] =~ /#{ware}/
+    # end
 
     url = "https://github.com" + link
 
@@ -97,6 +196,7 @@ module Ghcurl
     curl(url, $downloaded)
 
   end
+
 
   def install(ware, place: BIN_PATH)
     case RUBY_PLATFORM
@@ -147,6 +247,7 @@ module Ghcurl
 
 
   def install_on_windows
+    log "Sorry, not implemented yet!"
   end
 
 
@@ -165,15 +266,16 @@ module Ghcurl
     puts <<~EOC
     ghcurl (v#{VERSION}): Download files and install from Github releases
 
+    Default install to env 'GHCURL_BIN_PATH' or /usr/local/bin
+
     usage:
-      ghcurl repo_url  regexp => Search in repo_url the latest to download
-      ghcurl user/repo regexp => Search in user/repo the latest to download
-      ghcurl url re -v tag    => Download a specific tag version
-      ghcurl url re deb/rpm   => Download and install deb/rpm package
-      ghcurl url re -i [path] => Download and install to /usr/local/bin
-      ghcurl url re -i name   => Download and install as 'name'
-      ghcurl -l               => List downloaded files
-      ghcurl -h               => Print this help
+      ghcurl [user]/repo regexp => Search latest version in user/repo to download
+      ghcurl repo regexp -v tag => Download a specific tag version
+      ghcurl repo deb/rpm       => Download and install deb/rpm package
+      ghcurl repo re -i [path]  => Download and install to path
+      ghcurl repo re -i name    => Download and install as 'name'
+      ghcurl -l                 => List downloaded files
+      ghcurl -h                 => Print this help
 
     example:
       ghcurl rbspy/rbspy 'x86_64.*linux' -v0.11.1
@@ -191,53 +293,46 @@ end
 ####################
 extend Ghcurl
 
-# e.g. ccmywish/binary binfile
-gh_repo, ware = ARGV.shift(2)
-case gh_repo
-when '-l'           then list_wares ; exit
-when '-h', '--help' then help ; exit
-when nil            then help ; exit
+CO =CliSwitch::Option
+op_config = [] << CO.new(name: 'install', short: '-i', arg_required: 'optional') <<
+                  CO.new(name: 'version', short: '-v', arg_required: 'required') <<
+                  CO.new(name: 'help', short: '-h', long: '--help', arg_required: 'noarg')
+
+cli = CliSwitch.new(op_config)
+args, opts = cli.parse(ARGV)
+
+if args.empty? 
+  help
+  exit 
+end
+
+if args.size >= 2
+  repo_or_name, regexp = args[0], args[1]
+else
+  repo_or_name, regexp = args[0], nil
 end
 
 
-arg = ARGV.shift
-next_op = true
+version = nil
+need_install = false
+install_to = nil
 
-default_ware = -> ware do
-  ware.include?('/') ? ware.split('/')[1] : ware
-end .call
-
-case ware
-when '-v'  
-  download(gh_repo, default_ware, version: ARGV.shift)
-when /-v\d.*/
-  v = arg.split('-v')[1]
-  download(gh_repo, default_ware, version: v)
-
-when '-i' 
-  place = ARGV.shift
-  if place.nil?
-    install($downloaded)
-  else
-    install($downloaded, place: place)
+opts.each do 
+  case _1.name 
+  when 'help'
+    help
+  when 'version'
+    version = _1.next_arg
+  when 'install'
+    install = true
+    install_to = _1.next_arg
   end
-when /-i.*/
-  place = next_op.split('-i')[1]
-  install($downloaded, place: place)
-
-else
-  download(gh_repo, default_ware)
-  next_op = false
 end
 
+p repo_or_name
+p regexp
 
-if next_op
-  next_op = ARGV.shift
-else
-  next_op = arg
-end
-
-
-case next_op
-
+download(repo_or_name, regexp, version: version)
+if need_install
+  install($downloaded, place: install_to)
 end
