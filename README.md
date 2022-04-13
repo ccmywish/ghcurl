@@ -10,7 +10,7 @@ gem install ghcurl
 
 <br>
 
-Download files (and install) from Github releases.
+Download files and install from Github releases.
 
 </div>
 
@@ -20,6 +20,12 @@ Download latest deb/rpm package and install, notice the argument `deb` / `rpm` a
 ```bash
 ghcurl cli/cli deb -i
 ghcurl cli/cli rpm -i
+```
+
+Things can be easier.
+```bash
+# It knows that's sharkdp/fd
+ghcurl fd -i
 ```
 
 Normal download
