@@ -2,7 +2,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-13>
+# Last modified : <2022-04-14>
 #
 # ghcurl:
 #
@@ -59,5 +59,7 @@ Ghcurl::DEFAULT_WARES = {
   httpie:  'httpie/httpie',
   curlie:  'rs/curlie',
   xh:      'ducaale/xh',
-  zoxide:  'ajeetdsouza/zoxide'
+  zoxide:  'ajeetdsouza/zoxide',
+
+  scc:     'boyter/scc'
 }

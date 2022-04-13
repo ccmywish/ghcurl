@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-13>
+# Last modified : <2022-04-14>
 #
 # ghcurl:
 #
@@ -21,7 +21,6 @@ module Ghcurl
 
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
   BIN_PATH  = ENV['GHCURL_BIN_PATH'] || "/usr/local/bin"
-
   HL = HighLine.new
 
   class Error < StandardError; end
@@ -105,9 +104,11 @@ module Ghcurl
       end
     end
 
-    puts "=> Approval and refuse"
-    p [os, arch]
-    p refuse
+    # Debug
+    # puts "=> Approval and refuse"
+    # p [os, arch]
+    # p refuse
+    
     # Now we only refuse others
     return refuse
   
@@ -147,7 +148,7 @@ module Ghcurl
       The search result is empty, check the args:
               repo:    #{repo}
               version: #{version ? version:'nil'}
-              
+
       EOE
       puts
     end
@@ -205,8 +206,9 @@ module Ghcurl
       ware_name = ware
     end
     
-    if not $downloaded.include?(ware_name)
-      re = cls.ask "Do you want to rename or install it to a different path? Enter the path or just enter to say no"
+    if  (! $downloaded.include?(ware_name)) and (!$downloaded.end_with?('.deb')) and (!$downloaded.end_with?('.rpm')) 
+      log "Do you want to rename or install it to a different path?"
+      re = HL.ask "Input path or name, or just enter to say no."
       if !re.empty? 
         place = re
       end
@@ -282,7 +284,7 @@ module Ghcurl
     Default install to env 'GHCURL_BIN_PATH' or /usr/local/bin
 
     usage:
-      ghcurl [user]/repo [regexp] => Search latest version in user/repo to download
+      ghcurl [user]/repo [regexp] => Search latest version with regexp to download
       ghcurl repo [re] -v tag     => Download a specific tag version
       ghcurl repo [deb/rpm]       => Download and install deb/rpm package
       ghcurl repo [re] -i [path]  => Download and install to path
@@ -291,8 +293,8 @@ module Ghcurl
       ghcurl -h                   => Print this help
 
     example:
-      ghcurl bat -i
-      ghcurl cli deb -i
+      ghcurl bat         => Search sharkdp/bat the latest
+      ghcurl cli deb -i  => Search cli/cli /deb/
       ghcurl rbspy/rbspy 'x86_64.*linux' -v0.11.1
 
     EOC
@@ -316,7 +318,7 @@ op_config = [] << CO.new(name: 'install', short: '-i', arg_required: 'optional')
 cli = CliSwitch.new(op_config)
 args, opts = cli.parse(ARGV)
 
-if args.empty? 
+if args.empty? and opts.empty?
   help
   exit 
 end
@@ -343,7 +345,7 @@ opts.each do
   when 'version'
     version = _1.next_arg
   when 'install'
-    install = true
+    need_install = true
     install_to = _1.next_arg
   end
 end
@@ -351,11 +353,17 @@ end
 # Debug
 # p repo_or_name
 # p regexp
+# p need_install
+# p install_to
 
 begin
 download(repo_or_name, regexp, version: version)
 if need_install
-  install(repo_or_name, place: install_to)
+  if install_to
+    install(repo_or_name, place: install_to)
+  else
+    install(repo_or_name)
+  end
 end
 rescue Interrupt
 end
