@@ -191,7 +191,7 @@ end
 ####################
 extend Ghcurl
 
-# e.g. ccmywish/binary
+# e.g. ccmywish/binary binfile
 gh_repo, ware = ARGV.shift(2)
 case gh_repo
 when '-l'           then list_wares ; exit
@@ -199,24 +199,34 @@ when '-h', '--help' then help ; exit
 when nil            then help ; exit
 end
 
-if ware.nil?
-  log "Download what?"
-  exit
-end
-
 
 arg = ARGV.shift
-
 next_op = true
 
-case arg
-when '-v'   
-  download gh_repo, ware, version: ARGV.shift
+default_ware = -> ware do
+  ware.include?('/') ? ware.split('/')[1] : ware
+end .call
+
+case ware
+when '-v'  
+  download(gh_repo, default_ware, version: ARGV.shift)
 when /-v\d.*/
   v = arg.split('-v')[1]
-  download gh_repo, ware, version: v
+  download(gh_repo, default_ware, version: v)
+
+when '-i' 
+  place = ARGV.shift
+  if place.nil?
+    install($downloaded)
+  else
+    install($downloaded, place: place)
+  end
+when /-i.*/
+  place = next_op.split('-i')[1]
+  install($downloaded, place: place)
+
 else
-  download gh_repo, ware
+  download(gh_repo, default_ware)
   next_op = false
 end
 
@@ -229,14 +239,5 @@ end
 
 
 case next_op
-when '-i' 
-  place = ARGV.shift
-  if place.nil?
-    install($downloaded)
-  else
-    install($downloaded, place: place)
-  end
-when /-i.*/
-  place = next_op.split('-i')[1]
-  install($downloaded, place: place)
+
 end
