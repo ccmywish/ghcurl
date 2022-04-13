@@ -51,10 +51,10 @@ module Ghcurl
   def get_filters
 
     arches = [ 
-                ['amd64','x86_64', 'x64'], 
-                ['386'],
-                ['arm64'], 
-                ['armv6'] 
+                ['amd64', 'x86_64', 'x64'], 
+                ['386',   'i686'],
+                ['arm64', 'aarch64'], 
+                ['armv6', 'arm'],
              ]
     
     oses = [
@@ -80,7 +80,7 @@ module Ghcurl
     end
 
     approval, refuse  = [], []
-    [os, arch].each { approval << _1 unless _1.nil? }
+    # [os, arch].each { approval << _1 unless _1.nil? }
 
     if os 
       i = oses.each_with_index do |type, index|
@@ -105,15 +105,16 @@ module Ghcurl
       end
     end
 
-    p "=> Approval and refuse"
-    p approval
+    puts "=> Approval and refuse"
+    p [os, arch]
     p refuse
-    return approval, refuse
+    # Now we only refuse others
+    return refuse
   
   end
 
 
-  def download(repo, ware, version: nil)
+  def download(repo, regexp, version: nil)
 
     if repo =~ /^https:\/\/github.com/
       require 'uri'
@@ -146,29 +147,31 @@ module Ghcurl
       The search result is empty, check the args:
               repo:    #{repo}
               version: #{version ? version:'nil'}
-              regexp:  #{ware}
+              
       EOE
       puts
     end
 
+
     links = links.map { _1['href'] }
-    app, refuse = get_filters()
-    
-    filtered = links.select do |l|
-      
-      ret = refuse.all? do |f|
-        l !~ /#{f}/
+
+
+    if regexp 
+      filtered = links.select do
+        _1 =~ /#{regexp}/
       end
-
-      next if !ret
-
-      app.any? do |f|      
-        l =~ /#{f}/
+    else
+      refuse = get_filters()    
+      filtered = links.select do |l|
+        refuse.all? do |f|
+          l !~ /#{f}/
+        end
       end
     end
 
+
     if filtered.size == 1
-      link = filtered[0]
+      link = filtered[0].split('/').last 
     else 
       if filtered.size == 0
         links_for_user = links.map { _1.split('/').last }
@@ -178,16 +181,11 @@ module Ghcurl
       link = HL.choose do |menu|
         menu.index_color  = :rgb_77bbff
         menu.prompt = "Which one do you want to download? "
-        menu.choices( *links_for_user ) {}
+        menu.choices( *links_for_user )
       end
     end
-    
-    p link.class
-    # link = links.each do
-    #  break _1['href'] if _1['href'] =~ /#{ware}/
-    # end
 
-    url = "https://github.com" + link
+    url = "https://github.com" + links[0].split('/')[0..-2].join('/') + '/' + link
 
     log "Downloading #{url}"
     
@@ -199,11 +197,26 @@ module Ghcurl
 
 
   def install(ware, place: BIN_PATH)
+
+    ware_name = ''
+    if ware.include?('/')
+      ware_name = ware.split('/').last
+    else
+      ware_name = ware
+    end
+    
+    if not $downloaded.include?(ware_name)
+      re = cls.ask "Do you want to rename or install it to a different path? Enter the path or just enter to say no"
+      if !re.empty? 
+        place = re
+      end
+    end
+    
     case RUBY_PLATFORM
     when /ucrt/i, /mingw/i
-      install_on_windows(ware, place)
+      install_on_windows($downloaded, place)
     else
-      install_on_nix(ware, place)
+      install_on_nix($downloaded, place)
     end
     log "Install finish!"
   end
@@ -269,17 +282,18 @@ module Ghcurl
     Default install to env 'GHCURL_BIN_PATH' or /usr/local/bin
 
     usage:
-      ghcurl [user]/repo regexp => Search latest version in user/repo to download
-      ghcurl repo regexp -v tag => Download a specific tag version
-      ghcurl repo deb/rpm       => Download and install deb/rpm package
-      ghcurl repo re -i [path]  => Download and install to path
-      ghcurl repo re -i name    => Download and install as 'name'
-      ghcurl -l                 => List downloaded files
-      ghcurl -h                 => Print this help
+      ghcurl [user]/repo [regexp] => Search latest version in user/repo to download
+      ghcurl repo [re] -v tag     => Download a specific tag version
+      ghcurl repo [deb/rpm]       => Download and install deb/rpm package
+      ghcurl repo [re] -i [path]  => Download and install to path
+      ghcurl repo [re] -i name    => Download and install as 'name'
+      ghcurl -l                   => List downloaded files
+      ghcurl -h                   => Print this help
 
     example:
+      ghcurl bat -i
+      ghcurl cli deb -i
       ghcurl rbspy/rbspy 'x86_64.*linux' -v0.11.1
-      ghcurl cli/cli deb -i
 
     EOC
   end
@@ -293,10 +307,11 @@ end
 ####################
 extend Ghcurl
 
-CO =CliSwitch::Option
+CO = CliSwitch::Option
 op_config = [] << CO.new(name: 'install', short: '-i', arg_required: 'optional') <<
                   CO.new(name: 'version', short: '-v', arg_required: 'required') <<
-                  CO.new(name: 'help', short: '-h', long: '--help', arg_required: 'noarg')
+                  CO.new(name: 'help', short: '-h', long: '--help', arg_required: 'noarg') << 
+                  CO.new(name: 'list', short: '-l', arg_required: 'noarg')
 
 cli = CliSwitch.new(op_config)
 args, opts = cli.parse(ARGV)
@@ -321,6 +336,10 @@ opts.each do
   case _1.name 
   when 'help'
     help
+    exit
+  when 'list'
+    list_wares
+    exit
   when 'version'
     version = _1.next_arg
   when 'install'
@@ -329,10 +348,14 @@ opts.each do
   end
 end
 
-p repo_or_name
-p regexp
+# Debug
+# p repo_or_name
+# p regexp
 
+begin
 download(repo_or_name, regexp, version: version)
 if need_install
-  install($downloaded, place: install_to)
+  install(repo_or_name, place: install_to)
+end
+rescue Interrupt
 end
