@@ -13,10 +13,10 @@
 
 require 'nokogiri'
 require 'open-uri'
+require 'ghcurl'
 
 module Ghcurl
 
-  VERSION   = "0.4.0"
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
   BIN_PATH  = "/usr/local/bin"
   

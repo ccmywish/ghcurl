@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require_relative 'lib/ghcurl'
+
 Gem::Specification.new do |spec|
   spec.name = "ghcurl"
-  spec.version = "0.4.0"
+  spec.version = Ghcurl::VERSION
   spec.authors = ["ccmywish"]
   spec.email = ["ccmywish@qq.com"]
 
@@ -27,9 +29,8 @@ Gem::Specification.new do |spec|
   end
   spec.bindir = "bin"
   spec.executables = spec.files.grep(%r{\Abin/}) { |f| File.basename(f) }
-  # spec.require_paths = ["lib"]
+  spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
   spec.add_dependency "nokogiri", "~> 1.13"
 
   # For more information and examples about making a new gem, check out our
