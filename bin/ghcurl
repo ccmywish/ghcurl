@@ -11,15 +11,18 @@
 #
 # ------------------------------------------------------
 
+require 'ghcurl'
 require 'nokogiri'
 require 'open-uri'
-require 'ghcurl'
+require 'highline'
 
 module Ghcurl
 
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
   BIN_PATH  = "/usr/local/bin"
-  
+
+  HL = HighLine.new
+
   class Error < StandardError; end
 
 
@@ -51,6 +54,14 @@ module Ghcurl
       uri = URI(repo)
       # index 1, take 2
       repo = uri.path.split('/')[1,2].join('/')
+    elsif !repo.include?('/')
+      got_repo = DEFAULT_WARES[repo.to_sym]
+      if not got_repo
+        user = HL.ask "Who developed the awesome '#{repo}' ? "
+        repo = user + '/' + repo
+      else
+        repo = got_repo
+      end
     end
 
     log "checking..."
@@ -152,7 +163,7 @@ module Ghcurl
 
   def help
     puts <<~EOC
-    ghcurl (v#{VERSION}): Download files (and install) from Github releases
+    ghcurl (v#{VERSION}): Download files and install from Github releases
 
     usage:
       ghcurl repo_url  regexp => Search in repo_url the latest to download
@@ -189,8 +200,7 @@ when nil            then help ; exit
 end
 
 if ware.nil?
-  log "ghcurl: Download what?"
-  log "        use: ghcurl repo file"
+  log "Download what?"
   exit
 end
 
