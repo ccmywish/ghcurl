@@ -217,12 +217,19 @@ module Ghcurl
     end
 
 
+    #
+    # The zipped file
+    #
+    
+    zip_flag = false
     # unzipped to dir
     unzip_dir = ""
     # unzipped files
     files = ""
     # our desired software name
     name  = ""
+    
+    if target.match?(/\.zip$/) or target.match?(/\.tar\.(\w){1,3}/)
 
     # unzip 
     if target.match? /\.zip$/
@@ -257,6 +264,7 @@ module Ghcurl
     end
     
 
+
     Dir.chdir unzip_dir do
       files = _iterate_dir('.')
     end
@@ -272,6 +280,15 @@ module Ghcurl
       name = files[0]
     end
 
+    end # end of zipped file handle
+
+
+    if !zip_flag
+      # downloaded name in WAREHOUSE
+      name = dl_name
+    end
+
+    
     if (name.size > 10     ||
         name.include?('.') ||
         name.include?('-') ||
@@ -283,12 +300,16 @@ module Ghcurl
       end
     end
 
-    # add unzip_dir prefix
-    name = unzip_dir.delete_prefix(WAREHOUSE + '/') + '/' + name
+    
+    if zip_flag
+      # add unzip_dir prefix
+      name = unzip_dir.delete_prefix(WAREHOUSE + '/') + '/' + name
+    end
 
     if rename_as 
       log "Renamed as '#{rename_as}'"
     end
+
 
     case RUBY_PLATFORM
     when /ucrt/i, /mingw/i
