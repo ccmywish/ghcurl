@@ -198,6 +198,7 @@ module Ghcurl
   end
 
 
+
   def install(dl_name, rename_as: nil,  install_to: nil)
 
     if install_to.nil?
@@ -246,12 +247,12 @@ module Ghcurl
     else
       name = files[0]
     end
-    
+    p rename_as
     if (name.size > 10     ||
         name.include?('.') ||
         name.include?('-') ||
-        name.include?('_') && (not rename_as))
-      log "Do you want to rename the #{name}?"
+        name.include?('_')) && (not rename_as)
+      log "Do you want to rename the '#{name}'?"
       re = HL.ask "Input name, or just leave it blank to say no."
       if !re.empty? 
         rename_as = re
@@ -278,9 +279,10 @@ module Ghcurl
     if test 'd', install_to
       log "Ready to install..."
       if rename_as
-        system "sudo cp #{target} #{install_to}/#{rename_as}"
-        system "sudo chmod +x #{install_to}"
-        log "Installed as #{install_to}/#{rename_as}"
+        dest = "#{install_to}/#{rename_as}"
+        system "sudo cp #{target} " + dest
+        system "sudo chmod +x " + dest
+        log "Installed as " + dest
       else
         cmd = "sudo install -Dt #{install_to} -m 755 #{target} "
         system cmd
@@ -420,6 +422,7 @@ end
 # p regexp
 # p need_install
 # p install_to
+# p rename_as
 
 begin
 dl_name = download(repo_or_name, regexp, version: version)
