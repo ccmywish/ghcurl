@@ -219,50 +219,83 @@ module Ghcurl
     end
 
 
-    if target.end_with?('tar.gz')
+    # unzipped files
+    files = ""
+    # our desired software name
+    name  = ""
+
+    # unzip 
+    if target.match? /\.zip$/
+      log "Unzip zip file"
+      `unzip #{target}`
     end
     
-    
-    log "Do you want to rename or install it to a different path?"
-    re = HL.ask "Input name, or just enter to say no."
-    if !re.empty? 
-      install_to = re
+    # .gz, .bz2, .xz
+    if target.match? /\.tar\.(\w){1,3}/
+      log "Unzip tar file"
+      files = `tar xvf #{target} --directory=#{WAREHOUSE}`
     end
     
+    files = files.split("\n")
+    if files.size > 1
+      name = HL.choose do |menu|
+        menu.index_color  = :rgb_77bbff
+        menu.prompt = "Which one do you want to install? "
+        menu.choices( *files )
+      end
+    else
+      name = files[0]
+    end
+    
+    if (name.size > 10     ||
+        name.include?('.') ||
+        name.include?('-') ||
+        name.include?('_') && (not rename_as))
+      log "Do you want to rename the #{name}?"
+      re = HL.ask "Input name, or just leave it blank to say no."
+      if !re.empty? 
+        rename_as = re
+      end
+    end
+    
+    if rename_as 
+      log "Renamed as #{rename_as}"
+    end
+
     case RUBY_PLATFORM
     when /ucrt/i, /mingw/i
-      install_on_windows(dl_name, install_to)
+      install_on_windows(name, install_to, rename_as)
     else
-      install_on_nix(dl_name, install_to)
+      install_on_nix(name, install_to, rename_as)
     end
-    log "Install finish!"
   end
 
 
-  def install_on_nix(ware, install_to)
+  def install_on_nix(name, install_to, rename_as)
+    install_to = install_to.chomp('/')
+    target = WAREHOUSE + '/' + name
 
     if test 'd', install_to
-      cmd = "sudo install -Dt #{install_to} -m 755 #{target} "
-      system cmd
-      log "Install #{ware} to " + install_to
-
-    else
-      unless install_to.include?('/')
-        # User just give it another name
-        install_to = BIN_PATH + '/' + install_to
+      log "Ready to install..."
+      if rename_as
+        system "sudo cp #{target} #{install_to}/#{rename_as}"
+        system "sudo chmod +x #{install_to}"
+        log "Installed as #{install_to}/#{rename_as}"
       else
-        # User give it a path and its name
+        cmd = "sudo install -Dt #{install_to} -m 755 #{target} "
+        system cmd
+        log "Install #{name} to " + install_to
       end
-      log "Installed as " + install_to
-      system "sudo cp #{target} #{install_to}"
-      system "sudo chmod +x #{install_to}"
+      log "Install finish!"
+    else
+      log "#{install_to} is not a directory!"
     end
 
   end
 
 
   def install_on_windows
-    log "Sorry, not implemented yet!"
+    log "Sorry, not implemented yet on Windows! Can you help?"
   end
 
 

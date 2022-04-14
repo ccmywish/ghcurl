@@ -61,5 +61,6 @@ Ghcurl::DEFAULT_WARES = {
   xh:      'ducaale/xh',
   zoxide:  'ajeetdsouza/zoxide',
 
-  scc:     'boyter/scc'
+  scc:     'boyter/scc',
+  rbspy:   'rbspy/rbspy'
 }
