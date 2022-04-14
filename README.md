@@ -22,7 +22,7 @@ ghcurl cli/cli deb -i
 ghcurl cli/cli rpm -i
 ```
 
-Things can be easier.
+Things can be easier. We consider these as popular binaries:  https://github.com/ibraheemdev/modern-unix
 ```bash
 # It knows that's sharkdp/fd
 ghcurl fd -i

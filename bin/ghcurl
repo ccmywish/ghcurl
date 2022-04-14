@@ -58,7 +58,8 @@ module Ghcurl
     
     oses = [
              ['linux'],
-             ['mac', 'apple'],
+             ['freebsd'],
+             ['mac', 'apple', 'darwin'],
              ['windows']
            ]
 
@@ -190,43 +191,16 @@ module Ghcurl
 
     log "Downloading #{url}"
     
-    $downloaded = link.split('/').last
+    download_name = link.split('/').last
 
-    curl(url, $downloaded)
-
+    curl(url, download_name)
+    return download_name
   end
 
 
-  def install(ware, place: BIN_PATH)
+  def install(dl_name, place: BIN_PATH)
 
-    ware_name = ''
-    if ware.include?('/')
-      ware_name = ware.split('/').last
-    else
-      ware_name = ware
-    end
-    
-    if  (! $downloaded.include?(ware_name)) and (!$downloaded.end_with?('.deb')) and (!$downloaded.end_with?('.rpm')) 
-      log "Do you want to rename or install it to a different path?"
-      re = HL.ask "Input path or name, or just enter to say no."
-      if !re.empty? 
-        place = re
-      end
-    end
-    
-    case RUBY_PLATFORM
-    when /ucrt/i, /mingw/i
-      install_on_windows($downloaded, place)
-    else
-      install_on_nix($downloaded, place)
-    end
-    log "Install finish!"
-  end
-
-
-  def install_on_nix(ware, place)
-
-    target = "#{WAREHOUSE}/#{ware}"
+    target = "#{WAREHOUSE}/#{dl_name}"
 
     if target.end_with?('.deb')
       log "Install deb package for you"
@@ -240,6 +214,28 @@ module Ghcurl
       return
     end
 
+
+    if target.end_with?('tar.gz')
+    end
+    
+    
+    log "Do you want to rename or install it to a different path?"
+    re = HL.ask "Input name, or just enter to say no."
+    if !re.empty? 
+      place = re
+    end
+    
+    case RUBY_PLATFORM
+    when /ucrt/i, /mingw/i
+      install_on_windows(dl_name, place)
+    else
+      install_on_nix(dl_name, place)
+    end
+    log "Install finish!"
+  end
+
+
+  def install_on_nix(ware, place)
 
     if test 'd', place
       cmd = "sudo install -Dt #{place} -m 755 #{target} "
@@ -357,12 +353,12 @@ end
 # p install_to
 
 begin
-download(repo_or_name, regexp, version: version)
+dl_name = download(repo_or_name, regexp, version: version)
 if need_install
   if install_to
-    install(repo_or_name, place: install_to)
+    install(dl_name, place: install_to)
   else
-    install(repo_or_name)
+    install(dl_name)
   end
 end
 rescue Interrupt
