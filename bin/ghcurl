@@ -290,11 +290,11 @@ module Ghcurl
       case re.downcase
       when '','y','ye','yes','true'
         FileUtils.rm_rf WAREHOUSE
-        log "ghcurl: Delete done"
+        log "Delete all done"
       end
     else
       FileUtils.rm WAREHOUSE + '/' + name
-      log "ghcurl: Delete done"
+      log "Delete #{name} done"
     end
 
     rescue Exception => e
@@ -368,6 +368,9 @@ opts.each do
     exit
   when 'list'
     list_wares
+    exit
+  when 'delete'
+    delete_wares(_1.next_arg)
     exit
   when 'version'
     version = _1.next_arg
