@@ -309,14 +309,14 @@ end
 ####################
 extend Ghcurl
 
-CO = CliSwitch::Option
-op_config = [] << CO.new(name: 'install', short: '-i', arg_required: 'optional') <<
-                  CO.new(name: 'version', short: '-v', arg_required: 'required') <<
-                  CO.new(name: 'help', short: '-h', long: '--help', arg_required: 'noarg') << 
-                  CO.new(name: 'list', short: '-l', arg_required: 'noarg')
+class Ghcurl::CLI < CliSwitch
+  option name: 'install', short: '-i', arg_required: 'optional'
+  option name: 'version', short: '-v', arg_required: 'required'
+  option name: 'help', short: '-h', long: '--help', arg_required: 'noarg'
+  option name: 'list', short: '-l', arg_required: 'noarg'
+end
 
-cli = CliSwitch.new(op_config)
-args, opts = cli.parse(ARGV)
+args, opts = Ghcurl::CLI.new.parse(ARGV)
 
 if args.empty? and opts.empty?
   help
