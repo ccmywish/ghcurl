@@ -374,7 +374,6 @@ opts.each do
   when 'install'
     need_install = true
     install_to = _1.next_arg
-  end
   when 'rename'
     rename_as = _1.next_arg
   end
@@ -389,7 +388,7 @@ end
 begin
 dl_name = download(repo_or_name, regexp, version: version)
 if need_install
-  install(dl_name, rename_as:, rename_as, install_to: install_to)
+  install(dl_name, rename_as: rename_as, install_to: install_to)
 end
 rescue Interrupt
 end
