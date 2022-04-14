@@ -7,7 +7,7 @@
 #
 # ghcurl:
 #
-#   Download files (and install) from Github releases
+#   Download files and install from Github releases
 #
 # ------------------------------------------------------
 
@@ -198,7 +198,11 @@ module Ghcurl
   end
 
 
-  def install(dl_name, place: BIN_PATH)
+  def install(dl_name, rename_as: nil,  install_to: nil)
+
+    if install_to.nil?
+      install_to = BIN_PATH
+    end
 
     target = "#{WAREHOUSE}/#{dl_name}"
 
@@ -222,36 +226,36 @@ module Ghcurl
     log "Do you want to rename or install it to a different path?"
     re = HL.ask "Input name, or just enter to say no."
     if !re.empty? 
-      place = re
+      install_to = re
     end
     
     case RUBY_PLATFORM
     when /ucrt/i, /mingw/i
-      install_on_windows(dl_name, place)
+      install_on_windows(dl_name, install_to)
     else
-      install_on_nix(dl_name, place)
+      install_on_nix(dl_name, install_to)
     end
     log "Install finish!"
   end
 
 
-  def install_on_nix(ware, place)
+  def install_on_nix(ware, install_to)
 
-    if test 'd', place
-      cmd = "sudo install -Dt #{place} -m 755 #{target} "
+    if test 'd', install_to
+      cmd = "sudo install -Dt #{install_to} -m 755 #{target} "
       system cmd
-      log "Install #{ware} to " + place
+      log "Install #{ware} to " + install_to
 
     else
-      unless place.include?('/')
+      unless install_to.include?('/')
         # User just give it another name
-        place = BIN_PATH + '/' + place
+        install_to = BIN_PATH + '/' + install_to
       else
         # User give it a path and its name
       end
-      log "Installed as " + place
-      system "sudo cp #{target} #{place}"
-      system "sudo chmod +x #{place}"
+      log "Installed as " + install_to
+      system "sudo cp #{target} #{install_to}"
+      system "sudo chmod +x #{install_to}"
     end
 
   end
@@ -262,15 +266,43 @@ module Ghcurl
   end
 
 
+  #
+  # For -l option
+  #
   def list_wares
-    
-    puts blue("In #{WAREHOUSE}")
-    puts
+    puts blue("ghcurl: #{WAREHOUSE}")
     Dir.children(WAREHOUSE).each_with_index do |dict,i|
-      puts "  #{blue(i+1)}. #{bold(green(dict))}"
+      puts "#{blue(i+1)}. #{bold(green(dict))}"
     end
-    puts
   end
+
+
+  #
+  # For -d option
+  #
+  def delete_wares(name)
+    require 'fileutils'
+
+    begin 
+
+    if name.nil? 
+      re = HL.ask "Do you want to delete all downloaded files?"
+      case re.downcase
+      when '','y','ye','yes','true'
+        FileUtils.rm_rf WAREHOUSE
+        log "ghcurl: Delete done"
+      end
+    else
+      FileUtils.rm WAREHOUSE + '/' + name
+      log "ghcurl: Delete done"
+    end
+
+    rescue Exception => e
+      puts bold(red("ghcurl: #{e}"))
+      list_wares
+    end
+
+  end # end def delete_wares
 
 
   def help
@@ -284,8 +316,9 @@ module Ghcurl
       ghcurl repo [re] -v tag     => Download a specific tag version
       ghcurl repo [deb/rpm]       => Download and install deb/rpm package
       ghcurl repo [re] -i [path]  => Download and install to path
-      ghcurl repo [re] -i name    => Download and install as 'name'
+      ghcurl repo [re] -i -r name => Download and install as 'name'
       ghcurl -l                   => List downloaded files
+      ghcurl -d [name]            => Delete a downloaded file or all
       ghcurl -h                   => Print this help
 
     example:
@@ -307,9 +340,11 @@ extend Ghcurl
 
 class Ghcurl::CLI < CliSwitch
   option name: 'install', short: '-i', arg_required: 'optional'
+  option name: 'rename',  short: '-r', arg_required: 'required'
   option name: 'version', short: '-v', arg_required: 'required'
-  option name: 'help', short: '-h', long: '--help', arg_required: 'noarg'
-  option name: 'list', short: '-l', arg_required: 'noarg'
+  option name: 'help',    short: '-h', long: '--help', arg_required: 'noarg'
+  option name: 'list',    short: '-l', arg_required: 'noarg'
+  option name: 'delete',  short: '-d', arg_required: 'optional'
 end
 
 args, opts = Ghcurl::CLI.new.parse(ARGV)
@@ -319,16 +354,12 @@ if args.empty? and opts.empty?
   exit 
 end
 
-if args.size >= 2
-  repo_or_name, regexp = args[0], args[1]
-else
-  repo_or_name, regexp = args[0], nil
-end
 
-
+repo_or_name, regexp = args[0], args[1]
 version = nil
 need_install = false
 install_to = nil
+rename_as  = nil
 
 opts.each do 
   case _1.name 
@@ -344,6 +375,9 @@ opts.each do
     need_install = true
     install_to = _1.next_arg
   end
+  when 'rename'
+    rename_as = _1.next_arg
+  end
 end
 
 # Debug
@@ -355,11 +389,7 @@ end
 begin
 dl_name = download(repo_or_name, regexp, version: version)
 if need_install
-  if install_to
-    install(dl_name, place: install_to)
-  else
-    install(dl_name)
-  end
+  install(dl_name, rename_as:, rename_as, install_to: install_to)
 end
 rescue Interrupt
 end
