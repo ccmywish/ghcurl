@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-14>
+# Last modified : <2022-04-15>
 #
 # ghcurl:
 #
@@ -16,11 +16,12 @@ require 'nokogiri'
 require 'open-uri'
 require 'highline'
 require 'cliswitch'
+require 'fileutils'
 
 module Ghcurl
 
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
-  BIN_PATH  = ENV['GHCURL_BIN_PATH'] || "/usr/local/bin"
+  BIN_PATH  = ENV['GHCURL_BIN_PATH'].chomp('/') || "/usr/local/bin"
   HL = HighLine.new
 
   class Error < StandardError; end
@@ -37,10 +38,6 @@ module Ghcurl
   
 
   def curl(url, name)
-    #if !test('d', WAREHOUSE)
-    #  require 'fileutils'
-    #  FileUtils.mkdir_p(WAREHOUSE)
-    #end
     cmd = "curl -L #{url} --create-dirs -o #{WAREHOUSE}/#{name}"
     system cmd
     log "Downloaded to #{WAREHOUSE}/#{name}"
@@ -231,14 +228,15 @@ module Ghcurl
     if target.match? /\.zip$/
       log "Unzip zip file"
       unzip_dir = target.chomp('.zip')
-      system "unzip #{target} -d #{unzip_dir}"
+      system "unzip -q #{target} -d #{unzip_dir}"
     end
     
     # .gz, .bz2, .xz
     if target.match? /\.tar\.(\w){1,3}/
       log "Unzip tar file"
       unzip_dir = target.split('.')[0..-3].join('.')
-      system = "tar xvf #{target} --directory=#{unzip_dir}"
+      FileUtils.mkdir_p(unzip_dir)
+      system "tar xf #{target} --directory=#{unzip_dir}"
     end
     
 
@@ -258,12 +256,12 @@ module Ghcurl
       result
     end
     
-    Dir.chdir unzip_dir
+
+    Dir.chdir unzip_dir do
       files = _iterate_dir('.')
     end
 
-
-    files = files.split("\n")
+    
     if files.size > 1
       name = HL.choose do |menu|
         menu.index_color  = :rgb_77bbff
@@ -284,9 +282,12 @@ module Ghcurl
         rename_as = re
       end
     end
-    
+
+    # add unzip_dir prefix
+    name = unzip_dir.delete_prefix(WAREHOUSE + '/') + '/' + name
+
     if rename_as 
-      log "Renamed as #{rename_as}"
+      log "Renamed as '#{rename_as}'"
     end
 
     case RUBY_PLATFORM
@@ -303,7 +304,7 @@ module Ghcurl
     target = WAREHOUSE + '/' + name
 
     if test 'd', install_to
-      log "Ready to install..."
+      log "Ready to install #{name}"
       if rename_as
         dest = "#{install_to}/#{rename_as}"
         system "sudo cp #{target} " + dest
@@ -342,8 +343,6 @@ module Ghcurl
   # For -d option
   #
   def delete_wares(name)
-    require 'fileutils'
-
     begin 
 
     if name.nil? 
