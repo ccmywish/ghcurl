@@ -231,6 +231,8 @@ module Ghcurl
     
     if target.match?(/\.zip$/) or target.match?(/\.tar\.(\w){1,3}/)
 
+      zip_flag = true
+
     # unzip 
     if target.match? /\.zip$/
       log "Unzip zip file"
@@ -288,7 +290,7 @@ module Ghcurl
       name = dl_name
     end
 
-    
+
     if (name.size > 10     ||
         name.include?('.') ||
         name.include?('-') ||
@@ -406,6 +408,7 @@ module Ghcurl
       ghcurl bat         => Search sharkdp/bat the latest
       ghcurl cli deb -i  => Search cli/cli /deb/
       ghcurl rbspy/rbspy 'x86_64.*linux' -v0.11.1
+      ghcurl dlvhdr/gh-dash linux-amd64 -i -r 'gd'
 
     EOC
   end
