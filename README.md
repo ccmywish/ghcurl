@@ -14,7 +14,9 @@ Download files and install from Github releases.
 
 It's quite easy to use `ghcurl`, because it can recognize your OS and arch, always give you the best option to download by default. What's more, You can search by regular expression, specify a version, and install it to a path or according to the environment variable `GHCURL_BIN_PATH` or just `/usr/local/bin`. The best of it is to automatically extract a tar/zip file to make the installation process smooth in a terminal.
 
-It may be difficult to use it on Windows, welcome contributions!
+I only test it on Linux. Can you help on macOS? And It may be difficult to use it on Windows, it seems very tedious to implement.
+
+Anyway, welcome feedback and contributions!
 
 </div>
 
