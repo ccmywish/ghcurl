@@ -26,6 +26,7 @@ $ ghcurl [user/]repo [regexp] [options]
 ```
 
 **-o**
+
 This is optional, download will default to `~/.cache/ghcurl`
 1. `-o path` Download into path
 2. `-o path/name` Download as path/name
