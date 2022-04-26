@@ -69,6 +69,8 @@ ghcurl cli/cli rpm -i
 
 Normal download
 ```bash
+# The easiest way to download
+ghcurl gh
 
 # Download to /tmp
 ghcurl gh -o /tmp
