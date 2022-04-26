@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-15>
+# Last modified : <2022-04-26>
 #
 # ghcurl:
 #
@@ -12,8 +12,7 @@
 # ------------------------------------------------------
 
 require 'ghcurl'
-require 'nokogiri'
-require 'open-uri'
+require 'octokit'
 require 'highline'
 require 'cliswitch'
 require 'fileutils'
