@@ -35,10 +35,25 @@ module Ghcurl
   end
   
 
-  def curl(url, name)
-    cmd = "curl -L #{url} --create-dirs -o #{WAREHOUSE}/#{name}"
+  #
+  # @return absolute download path
+  #
+  def curl(url, name, to)
+    if to == nil
+      to = WAREHOUSE + '/' + name
+    elsif test 'd', to
+      to = to.chomp('/')  + '/' + name
+    elsif to.include?('/')
+      # noop
+    else
+      # just a rename in WAREHOUSE
+      to = WAREHOUSE + '/' + name
+    end
+
+    cmd = "curl -L #{url} --create-dirs -o #{to}"
     system cmd
-    log "Downloaded to #{WAREHOUSE}/#{name}"
+    log "Downloaded to #{to}"
+    return to
   end
 
 
@@ -190,54 +205,57 @@ module Ghcurl
       end
     end
 
-    url = "https://github.com" + links[0].split('/')[0..-2].join('/') + '/' + link
+    url = links[0].split('/')[0..-2].join('/') + '/' + link
 
     log "Downloading #{url}"
     
-    download_name = link.split('/').last
+    dl_name = link.split('/').last
 
-    curl(url, download_name)
-    return download_name
+    return curl(url, dl_name, download_to)
   end
 
 
-
-  def install(dl_name, rename_as: nil,  install_to: nil)
-
-    if install_to.nil?
-      install_to = BIN_PATH
-    end
-
-    target = "#{WAREHOUSE}/#{dl_name}"
+  #
+  # This function is a little confusing
+  #
+  # target: The absolute path to a downloaded file
+  # name  : The software name
+  #
+  def install(target, rename_as: nil,  install_to: nil)
 
     if target.end_with?('.deb')
-      log "Install deb package for you"
+      log "Install the deb package"
       system "sudo dpkg -i #{target}"
       return
     end
 
     if target.end_with?('.rpm')
-      log "Install rpm package for you"
+      log "Install the rpm package"
       system "sudo rpm -i #{target}"
       return
     end
 
 
+    if install_to.nil?
+      install_to = BIN_PATH
+    end
+
+
     #
-    # The zipped file
+    # Handle zip situation
     #
-    
     zip_flag = false
-    # unzipped to dir
-    unzip_dir = ""
-    # unzipped files
-    files = ""
-    # our desired software name
-    name  = ""
-    
+
     if target.match?(/\.zip$/) or target.match?(/\.tar\.(\w){1,3}/)
 
       zip_flag = true
+
+      # unzipped to dir
+      unzip_dir = ""
+      # unzipped files
+      files = ""
+      # the target unzipped file name (this includes the path prefix)
+      unzip_name = ""
 
     # unzip 
     if target.match? /\.zip$/
@@ -255,7 +273,9 @@ module Ghcurl
     end
     
 
-    
+    #
+    # @return [Array] file names in the dir
+    #
     def _iterate_dir(dir)
       result = []
       chd = Dir.children(dir)
@@ -272,28 +292,29 @@ module Ghcurl
     end
     
 
-
     Dir.chdir unzip_dir do
       files = _iterate_dir('.')
     end
 
     
     if files.size > 1
-      name = HL.choose do |menu|
+      unzip_name = HL.choose do |menu|
         menu.index_color  = :rgb_77bbff
         menu.prompt = "Which one do you want to install? "
         menu.choices( *files )
       end
     else
-      name = files[0]
+      unzip_name = files[0]
     end
 
     end # end of zipped file handle
 
 
-    if !zip_flag
-      # downloaded name in WAREHOUSE
-      name = dl_name
+    # Get software real name
+    if zip_flag
+      name = unzip_name.split('/').last
+    else
+      name = target.split('/').last
     end
 
 
@@ -308,29 +329,33 @@ module Ghcurl
       end
     end
 
-    
+
     if zip_flag
-      # add unzip_dir prefix
-      name = unzip_dir.delete_prefix(WAREHOUSE + '/') + '/' + name
+      # Now: 
+      #   target     is /home/xx/xx.zip
+      #   unzip_dir  is /home/xx/xx
+      #   unzip_file is            abc/cde/file (new target)
+      target = unzip_dir + '/' + unzip_name
     end
 
-    if rename_as 
-      log "Renamed as '#{rename_as}'"
-    end
+    log "Renamed as '#{rename_as}'" if rename_as 
 
 
     case RUBY_PLATFORM
     when /ucrt/i, /mingw/i
-      install_on_windows(name, install_to, rename_as)
+      install_on_windows(target, name, install_to, rename_as)
     else
-      install_on_nix(name, install_to, rename_as)
+      install_on_nix(target, name, install_to, rename_as)
     end
   end
 
 
-  def install_on_nix(name, install_to, rename_as)
-    install_to = install_to.chomp('/')
-    target = WAREHOUSE + '/' + name
+  #
+  # @param target [String] the absulute path of to be installed software 
+  # @param name   [String] the name of the software
+  #
+  def install_on_nix(target, name, install_to, rename_as)
+    install_to = install_to.chomp('/')  
 
     if test 'd', install_to
       log "Ready to install #{name}"
@@ -352,7 +377,7 @@ module Ghcurl
   end
 
 
-  def install_on_windows
+  def install_on_windows(target, name, install_to, rename_as)
     log "Sorry, not implemented yet on Windows! Can you help?"
   end
 
@@ -401,14 +426,15 @@ module Ghcurl
     Default install to env 'GHCURL_BIN_PATH' or /usr/local/bin
 
     usage:
-      ghcurl [user]/repo [regexp] => Search latest version with regexp to download
-      ghcurl repo [re] -v tag     => Download a specific tag version
-      ghcurl repo [re] -o [path]  => Download into a path or rename
-      ghcurl repo [re] -i [path]  => Download and install to path
-      ghcurl repo [re] -i -r name => Download and install as 'name'
-      ghcurl -l                   => List downloaded files
-      ghcurl -d [name]            => Delete a downloaded file or all
-      ghcurl -h                   => Print this help
+      ghcurl [user]/repo [regexp]   => Search latest version with regexp to download
+      ghcurl repo [re] -v tag       => Download a specific tag version
+      ghcurl repo [re] -o [path]    => Download into path or rename
+      ghcurl repo [re] -i [path]    => Download and install to path
+      ghcurl repo [re] -o [path] -i => Download into path and install
+      ghcurl repo [re] -i -r name   => Download and install as 'name'
+      ghcurl -l                     => List downloaded files
+      ghcurl -d [name]              => Delete a downloaded file or all
+      ghcurl -h                     => Print this help
 
     example:
       ghcurl bat         => Search sharkdp/bat the latest
@@ -449,6 +475,7 @@ end
 repo_or_name, regexp = args[0], args[1]
 version = nil
 need_install = false
+download_to = nil
 install_to = nil
 rename_as  = nil
 
@@ -484,9 +511,9 @@ end
 # p rename_as
 
 begin
-dl_name = download(repo_or_name, regexp, version: version, download_to: download_to)
+ware = download(repo_or_name, regexp, version: version, download_to: download_to)
 if need_install
-  install(dl_name, rename_as: rename_as, install_to: install_to)
+  install(ware, rename_as: rename_as, install_to: install_to)
 end
 rescue Interrupt
 end
