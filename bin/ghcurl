@@ -12,7 +12,6 @@
 # ------------------------------------------------------
 
 require 'ghcurl'
-require 'octokit'
 require 'highline'
 require 'cliswitch'
 require 'fileutils'
@@ -114,6 +113,8 @@ module Ghcurl
 
   def download(repo, regexp, version: nil)
 
+    require 'octokit'
+
     if repo =~ /^https:\/\/github.com/
       require 'uri'
       uri = URI(repo)
@@ -131,16 +132,21 @@ module Ghcurl
     end
 
     log "checking..."
-    unless version
-      doc = Nokogiri::HTML5 URI.open("https://github.com/#{repo}/releases/latest")
-    else
-      doc = Nokogiri::HTML5 URI.open("https://github.com/#{repo}/releases/tag/v#{version}")
+    begin
+      unless version
+        doc = Octokit::Client.new.latest_release(repo)
+      else
+        doc = Octokit::Client.new.release_for_tag(repo, 'v' + version)
+      end
+    rescue Octokit::NotFound
+      puts "ghcurl: Not found #{repo} v#{version} !"
+    rescue Error => e
+      puts e
+      exit 0
     end
 
-
-    links = doc.css("li>a[href^='/#{repo}/releases/download']")
+    links = doc.to_hash[:assets]
     if links.empty?
-      puts doc.css('li a').map(&:to_s)
       log <<~EOE
       The search result is empty, check the args:
               repo:    #{repo}
@@ -151,7 +157,7 @@ module Ghcurl
     end
 
 
-    links = links.map { _1['href'] }
+    links = links.map { _1[:browser_download_url] }
 
 
     if regexp 
