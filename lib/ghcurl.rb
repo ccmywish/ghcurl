@@ -24,6 +24,7 @@ end
 Ghcurl::DEFAULT_WARES = {
 
   cli: 'cli/cli',
+  gh:  'cli/cli',
 
   fd:  'sharkdp/fd',
   bat: 'sharkdp/bat',
