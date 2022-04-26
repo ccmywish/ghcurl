@@ -28,11 +28,11 @@ Notice: `-i` means to install.
 # It knows that's sharkdp/fd
 ghcurl fd -i
 
+# It's cli/cli !
+ghcurl gh -i
+
 # Much easier to install rbspy!
 ghcurl rbspy -i
-
-# On Linux, it's very handy
-ghcurl cli -i
 ```
 
 Download latest deb/rpm package and install, notice the argument `deb` / `rpm` are just regular expressions.
@@ -53,10 +53,10 @@ ghcurl rbspy/rbspy 'x86_64.*linux' -v0.11.1
 Download a binary and install it to anywhere
 ```bash
 # Install to /usr/local/bin
-ghcurl BetaPictoris/timeleft timeleft -i 
+ghcurl starship linux-gnu -i 
 
 # Install to ~/tmp/bin
-ghcurl BetaPictoris/timeleft timeleft -i ~/tmp/bin
+ghcurl BetaPictoris/timeleft -i ~/tmp/bin
 
 # Install and rename it to, here, 'gd' in /usr/local/bin
 ghcurl dlvhdr/gh-dash linux-amd64 -i -r 'gd'

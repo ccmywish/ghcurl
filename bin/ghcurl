@@ -111,10 +111,11 @@ module Ghcurl
   end
 
 
-  def download(repo, regexp, version: nil)
+  def download(repo, regexp, version: nil, download_to: nil)
 
     require 'octokit'
 
+    # adjust repo name : user/repo
     if repo =~ /^https:\/\/github.com/
       require 'uri'
       uri = URI(repo)
@@ -148,14 +149,14 @@ module Ghcurl
     links = doc.to_hash[:assets]
     if links.empty?
       log <<~EOE
-      The search result is empty, check the args:
+      The search result is empty, check the args!
               repo:    #{repo}
               version: #{version ? version:'nil'}
-
+      
+      Maybe there's no assets in this release
       EOE
-      puts
+      exit 0
     end
-
 
     links = links.map { _1[:browser_download_url] }
 
@@ -402,7 +403,7 @@ module Ghcurl
     usage:
       ghcurl [user]/repo [regexp] => Search latest version with regexp to download
       ghcurl repo [re] -v tag     => Download a specific tag version
-      ghcurl repo [deb/rpm]       => Download and install deb/rpm package
+      ghcurl repo [re] -o [path]  => Download into a path or rename
       ghcurl repo [re] -i [path]  => Download and install to path
       ghcurl repo [re] -i -r name => Download and install as 'name'
       ghcurl -l                   => List downloaded files
@@ -429,6 +430,7 @@ extend Ghcurl
 
 class Ghcurl::CLI < CliSwitch
   option name: 'install', short: '-i', arg_required: 'optional'
+  option name: 'output',  short: '-o', long: '--output', arg_required: 'required'
   option name: 'rename',  short: '-r', arg_required: 'required'
   option name: 'version', short: '-v', arg_required: 'required'
   option name: 'help',    short: '-h', long: '--help', arg_required: 'noarg'
@@ -463,6 +465,8 @@ opts.each do
     exit
   when 'version'
     version = _1.next_arg
+  when 'output'
+    download_to = _1.next_arg
   when 'install'
     need_install = true
     install_to = _1.next_arg
@@ -475,11 +479,12 @@ end
 # p repo_or_name
 # p regexp
 # p need_install
+# p download_to
 # p install_to
 # p rename_as
 
 begin
-dl_name = download(repo_or_name, regexp, version: version)
+dl_name = download(repo_or_name, regexp, version: version, download_to: download_to)
 if need_install
   install(dl_name, rename_as: rename_as, install_to: install_to)
 end
