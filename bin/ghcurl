@@ -386,6 +386,7 @@ module Ghcurl
   # For -l option
   #
   def list_wares
+    FileUtils.mkdir_p(WAREHOUSE)
     puts blue("ghcurl: #{WAREHOUSE}")
     Dir.children(WAREHOUSE).each_with_index do |dict,i|
       puts "#{blue(i+1)}. #{bold(green(dict))}"
@@ -400,7 +401,7 @@ module Ghcurl
     begin 
 
     if name.nil? 
-      re = HL.ask "Do you want to delete all downloaded files?"
+      re = HL.ask "Do you want to delete all downloaded files?[Enter to yes or n]"
       case re.downcase
       when '','y','ye','yes','true'
         FileUtils.rm_rf WAREHOUSE

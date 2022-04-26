@@ -37,7 +37,7 @@ This is optional, download will default to `~/.cache/ghcurl`
 
 **-i**
 1. `-i` Install to `/usr/local/bin` or `GHCURL_BIN_PATH`
-2. `-i path` Install to path`
+2. `-i path` Install to path
 
 **-r**
 1. `-r name` Install the binary as name 
