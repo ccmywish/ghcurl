@@ -2,7 +2,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-27>
+# Last modified : <2022-04-29>
 #
 # ghcurl:
 #
@@ -12,7 +12,7 @@
 
 module Ghcurl
 
-  VERSION  = "0.7.2"
+  VERSION  = "0.8.0"
 
 end
 

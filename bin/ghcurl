@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-26>
+# Last modified : <2022-04-29>
 #
 # ghcurl:
 #
@@ -51,7 +51,11 @@ module Ghcurl
     end
 
     cmd = "curl -L #{url} --create-dirs -o #{to}"
-    system cmd
+    status = system cmd
+    if status == false || status.nil?
+      log "Download error!"
+      exit
+    end
     log "Downloaded to #{to}"
     return to
   end
@@ -155,10 +159,11 @@ module Ghcurl
         doc = Octokit::Client.new.release_for_tag(repo, 'v' + version)
       end
     rescue Octokit::NotFound
-      puts "ghcurl: Not found #{repo} v#{version} !"
-    rescue Error => e
-      puts e
-      exit 0
+      log "Not found #{repo} v#{version} !"
+      exit
+    rescue StandardError => e
+      log e
+      exit
     end
 
     links = doc.to_hash[:assets]
