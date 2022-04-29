@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-29>
+# Last modified : <2022-04-30>
 #
 # ghcurl:
 #
@@ -143,7 +143,7 @@ module Ghcurl
     elsif !repo.include?('/')
       got_repo = DEFAULT_WARES[repo.to_sym]
       if not got_repo
-        user = HL.ask "Who developed the awesome '#{repo}' ? "
+        user = HL.ask "Who developed the awesome #{repo}? "
         repo = user + '/' + repo
       else
         repo = got_repo
@@ -328,7 +328,7 @@ module Ghcurl
         name.include?('-') ||
         name.include?('_')) && (not rename_as)
       log "Do you want to rename the '#{name}'?"
-      re = HL.ask "Input name, or just leave it blank to say no."
+      re = HL.ask "Input new name, or leave it blank to not rename."
       if !re.empty? 
         rename_as = re
       end
@@ -406,7 +406,7 @@ module Ghcurl
     begin 
 
     if name.nil? 
-      re = HL.ask "Do you want to delete all downloaded files?[Enter to yes or n]"
+      re = HL.ask "Do you want to delete all downloaded files? [Y/n]"
       case re.downcase
       when '','y','ye','yes','true'
         FileUtils.rm_rf WAREHOUSE
