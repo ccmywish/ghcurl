@@ -4,8 +4,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/ghcurl.svg)](https://rubygems.org/gems/ghcurl) 
 
-
-Download files and install from Github releases.
+Download files and install from Github releases. It works on Linux, Windows, macOS and maybe Other OSes.
 
 ```bash
 gem install ghcurl
@@ -14,8 +13,6 @@ gem install ghcurl
 </div>
 
 `ghcurl` can recognize your OS and arch, give you the proper option to download. You can search by regular expression, specify a version, and install it to a path or according to the environment variable `GHCURL_BIN_PATH` or just `/usr/local/bin`. It will automatically extract a tar/zip file to make the installation process better.
-
-Note it doesn't work on Windows.
 
 <br>
 
@@ -93,8 +90,8 @@ ghcurl BetaPictoris/timeleft -i ~/tmp/bin
 # Download as /tmp/github-cli and install
 ghcurl gh -o /tmp/github-cli -i
 
-# Install and rename it to, here, 'gd' in /usr/local/bin
-ghcurl dlvhdr/gh-dash linux-amd64 -i -r 'gd'
+# Install and rename it to, here, 'tldr' in /usr/local/bin
+ghcurl dbrgn/tealdeer x86_64 -i -r 'tldr'
 
 # or, like this
 ghcurl dlvhdr/gh-dash linux-amd64 -i ~/tmp/bin/gd
