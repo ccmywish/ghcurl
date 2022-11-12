@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-30>
+# Last modified : <2022-11-12>
 #
 # ghcurl:
 #
@@ -19,7 +19,11 @@ require 'fileutils'
 module Ghcurl
 
   WAREHOUSE = File.expand_path("~/.cache/ghcurl")
-  BIN_PATH  = ENV['GHCURL_BIN_PATH'].chomp('/') || "/usr/local/bin"
+  if  ENV['GHCURL_BIN_PATH'] 
+    BIN_PATH = ENV['GHCURL_BIN_PATH'].chomp('/')
+  else
+    BIN_PATH = "/usr/local/bin"
+  end
   HL = HighLine.new
 
   class Error < StandardError; end
@@ -64,10 +68,17 @@ module Ghcurl
   def get_filters
 
     arches = [ 
-                ['amd64', 'x86_64', 'x64'], 
-                ['386',   'i686'],
-                ['arm64', 'aarch64'], 
-                ['armv6', 'arm'],
+              # NOTE: Here we can't add 'x86' to the first group!
+              # Because we finally use simple "string compare" to filter out 
+              # the improper links. 
+              # If added, when we filter out the 'x86'(first group), 
+              # the leading 'x86' will remove 'x86_64'(the second group) too!!!
+                ['i386', 'i686'           ],
+                ['x64',  'x86_64', 'amd64'], 
+                
+                ['armv6', 'arm'           ],
+                ['armv7'                  ],
+                ['armv8', 'arm64', 'aarch64'], 
              ]
     
     oses = [
@@ -77,19 +88,45 @@ module Ghcurl
              ['windows']
            ]
 
+    # OS and Arch filters
     fs = RUBY_PLATFORM.split('-')
     os = ""
     arch = ""
     fs.each do |f|
       case f
-      when 'linux'  then os = 'linux'
-      when 'mac','macOS' then os = 'mac'
+      when 'linux'         then os = 'linux'
+      when 'mac',  'macOS' then os = 'mac'
+      when 'freebsd'       then os = 'freebsd'
       when 'ucrt', 'mingw', 'windows' then os = 'windows' 
-      when 'x86_64' then arch = 'x86_64'
-      when 'x86'    then arch = 'x86'
-      when 'amd64'  then arch = 'amd64'  
-      when 'arm64'  then arch = 'arm64' 
-      when 'armv6'  then arch = 'armv6' 
+      end
+    end
+
+    # Why we choose to REFUSE filters rather than APPROVE filters?
+    # The answer is here, you may notice, different developers decide to
+    # name their distribution differently according to the same arch. 
+    #
+    # For example, if a bin file is called "ruby_analyse.exe"
+    # The developer may call it (ONLY ONE of below):
+    #   1. ruby_analyse-windows-x64.exe
+    #   2. ruby_analyse-windows-x86_64.exe
+    #   3. ruby_analyse-windows-amd64.exe
+    # 
+    # Think of the situation: 
+    #   When we decide the native arch is "x86-64", and the developer gives 
+    #   the name 'xxx-amd64', we will filter the link out wrongly ....
+    #
+    # So, we can't target the download link via arch. However, we can 
+    # see them a group of possible names, then REFUSE other name of 
+    # other arches.
+    #
+    fs.each do |f|
+      case f
+      when 'x64',  'x86_64', 'amd64'    then arch = 'x86_64'        
+      when 'x86',  'i386',   'i686'     then arch = 'x86'
+      
+      when 'arm64', 'armv8',  'aarch64' then arch = 'arm64' 
+      when 'armv6', 'arm'               then arch = 'armv6' 
+      when 'armv7'                      then arch = 'armv7' 
       end
     end
 
@@ -119,7 +156,7 @@ module Ghcurl
       end
     end
 
-    # Debug
+    # DEBUG
     # puts "=> Approval and refuse"
     # p [os, arch]
     # p refuse
