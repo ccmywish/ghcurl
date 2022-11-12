@@ -4,7 +4,9 @@
 
 [![Gem Version](https://badge.fury.io/rb/ghcurl.svg)](https://rubygems.org/gems/ghcurl) 
 
-Download files and install from Github releases. It works on Linux, Windows, macOS and maybe Other OSes.
+Download files and install from Github releases. 
+
+It works on Linux, Windows, macOS and maybe other OSes.
 
 ```bash
 gem install ghcurl
