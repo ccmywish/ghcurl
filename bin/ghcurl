@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-11-12>
+# Last modified : <2022-11-13>
 #
 # ghcurl:
 #
@@ -420,7 +420,29 @@ module Ghcurl
 
 
   def install_on_windows(target, name, install_to, rename_as)
-    log "Sorry, not implemented yet on Windows! Can you help?"
+    if !ENV['GHCURL_BIN_PATH']
+      log "Sorry, you must specify 'GHCURL_BIN_PATH' environment variable to install on Windows!"
+      return 
+    end
+
+    install_to = install_to.chomp('/')  
+
+    if test 'd', install_to
+      log "Ready to install #{name}"
+      if rename_as
+        rename_as = rename_as + '.exe' unless rename_as.end_with?('.exe')
+        dest = "#{install_to}/#{rename_as}"
+        FileUtils.cp(target, dest)
+        log "Installed as " + dest
+      else      
+        FileUtils.cp(target, install_to)
+        log "Install #{name} to " + install_to
+      end
+      log "Install finish!"
+    else
+      log "#{install_to} is not a directory!"
+    end
+    
   end
 
 
