@@ -2,7 +2,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-04-30>
+# Last modified : <2022-11-12>
 #
 # ghcurl:
 #
@@ -12,7 +12,7 @@
 
 module Ghcurl
 
-  VERSION  = "0.8.1"
+  VERSION  = "0.8.2"
 
 end
 
@@ -66,6 +66,13 @@ Ghcurl::DEFAULT_WARES = {
   rbspy:    'rbspy/rbspy',
   starship: 'starship/starship',
 
-  glow:     'charmbracelet/glow'
+  glow:     'charmbracelet/glow',
 
+
+
+  ####################
+  #        t
+  ####################
+  tldr:     'dbrgn/tealdeer',
+  tealdeer: 'dbrgn/tealdeer'
 }
