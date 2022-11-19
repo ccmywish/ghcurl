@@ -2,7 +2,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-11-12>
+# Last modified : <2022-11-20>
 #
 # ghcurl:
 #
@@ -12,7 +12,7 @@
 
 module Ghcurl
 
-  VERSION  = "0.9.0"
+  VERSION  = "0.9.1"
 
 end
 
@@ -36,6 +36,7 @@ Ghcurl::DEFAULT_WARES = {
   
   lsd:     'Peltoche/lsd',
   delta:   'dandavison/delta',
+  dua:     'Byron/dua-cli',
   dust:    'bootandy/dust',
   duf:     'muesli/duf',
   broot:   'Canop/broot',
