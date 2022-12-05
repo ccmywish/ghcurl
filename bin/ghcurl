@@ -3,7 +3,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-11-13>
+# Last modified : <2022-12-05>
 #
 # ghcurl:
 #
@@ -383,12 +383,18 @@ module Ghcurl
     log "Renamed as '#{rename_as}'" if rename_as 
 
 
-    case RUBY_PLATFORM
-    when /ucrt/i, /mingw/i
+    # case RUBY_PLATFORM
+    # when /ucrt/i, /mingw/i
+    #  install_on_windows(target, name, install_to, rename_as)
+    # else
+    #  install_on_nix(target, name, install_to, rename_as)
+    # end
+    if Gem.win_platform?
       install_on_windows(target, name, install_to, rename_as)
     else
       install_on_nix(target, name, install_to, rename_as)
     end
+
   end
 
 

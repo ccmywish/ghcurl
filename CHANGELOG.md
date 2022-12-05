@@ -1,6 +1,10 @@
 # Changelog
 
-## [Unreleased](#) (2022-11-13)
+## [Unreleased](#) (2022-12-05)
+
+### Enhancements:
+
+- Use Gem.win_platform? to check OS rather than RUBY_PLATFORM
 
 <br>
 
