@@ -3,14 +3,14 @@
 require_relative 'lib/ghcurl'
 
 Gem::Specification.new do |spec|
-  spec.name = "ghcurl"
+  spec.name   = "ghcurl"
   spec.version = Ghcurl::VERSION
-  spec.authors = ["ccmywish"]
-  spec.email = ["ccmywish@qq.com"]
+  spec.author = "Aoran Zeng"
+  spec.email  = "ccmywish@qq.com"
 
   spec.license = "MIT"
-  spec.summary = "Download files (and install) from Github releases"
-  spec.description = "Download files (and install) from Github releases."
+  spec.summary = "Download files and install from Github releases"
+  spec.description = "Download files and install from Github releases."
   spec.homepage = "https://github.com/ccmywish/ghcurl"
   spec.required_ruby_version = ">= 2.6.0"
 
