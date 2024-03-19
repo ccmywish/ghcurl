@@ -31,8 +31,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Abin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "octokit", "~> 6.0"
-  spec.add_dependency "highline", "~> 2.0"
+  spec.add_dependency "octokit"
+  spec.add_dependency "highline"
   spec.add_dependency "cliswitch", "~> 0.3.0"
 
   # For more information and examples about making a new gem, check out our
