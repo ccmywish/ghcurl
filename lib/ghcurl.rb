@@ -2,7 +2,7 @@
 # File          : ghcurl.rb
 # Authors       : ccmywish <ccmywish@qq.com>
 # Created on    : <2022-04-12>
-# Last modified : <2022-11-20>
+# Last modified : <2024-03-19>
 #
 # ghcurl:
 #
@@ -12,7 +12,7 @@
 
 module Ghcurl
 
-  VERSION  = "0.9.1"
+  VERSION  = "0.9.2"
 
 end
 
@@ -33,7 +33,7 @@ Ghcurl::DEFAULT_WARES = {
 
   exa: 'ogham/exa',
   dog: 'ogham/dog',
-  
+
   lsd:     'Peltoche/lsd',
   delta:   'dandavison/delta',
   dua:     'Byron/dua-cli',
@@ -44,7 +44,7 @@ Ghcurl::DEFAULT_WARES = {
   ripgrep: 'BurntSushi/ripgrep',
   rg:      'BurntSushi/ripgrep',
   ag:      'ggreer/the_silver_searcher',
-  
+
   fzf:     'junegunn/fzf',
   fzy:     'jhawthorn/fzy',
 
@@ -75,5 +75,11 @@ Ghcurl::DEFAULT_WARES = {
   #        t
   ####################
   tldr:     'dbrgn/tealdeer',
-  tealdeer: 'dbrgn/tealdeer'
+  tealdeer: 'dbrgn/tealdeer',
+
+
+  ####################
+  #        g
+  ####################
+  gcm:      'git-ecosystem/git-credential-manager'
 }
